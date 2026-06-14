@@ -237,6 +237,7 @@ html = """
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
 <title>Zopiclona en compras públicas municipales — Análisis de adjudicaciones por licitación</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 

@@ -109,6 +109,7 @@ def publicar():
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
 <title>Compras públicas municipales de hipnóticos — Tesis</title>
 <style>
   * {{ box-sizing: border-box; }}
@@ -140,6 +141,8 @@ def publicar():
     (DOCS / "index.html").write_text(index, encoding="utf-8")
     # .nojekyll evita que GitHub Pages procese el sitio con Jekyll.
     (DOCS / ".nojekyll").write_text("", encoding="utf-8")
+    # robots.txt: pide a los buscadores que NO indexen el sitio (solo por link).
+    (DOCS / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
 
     print(f"\nSitio publicado en: {DOCS}")
     for a, t in publicados:
