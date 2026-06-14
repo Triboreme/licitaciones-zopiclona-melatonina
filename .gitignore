@@ -1,0 +1,14 @@
+# Artefactos de Python
+__pycache__/
+*.pyc
+
+# Basura del sistema operativo
+.DS_Store
+
+# Datos FILTRADOS: son artefactos regenerables (se recrean al reprocesar).
+# La fuente de verdad versionada son Datos_Zopiclona/ y Datos_Melatonina/.
+Datos_Zopiclona_Filtrados/
+Datos_Melatonina_Filtrados/
+
+# Base de datos suelta de pruebas antiguas
+*.db

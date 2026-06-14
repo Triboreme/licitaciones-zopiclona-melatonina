@@ -1,0 +1,80 @@
+name: Actualizar y publicar dashboards
+
+# Cuándo se ejecuta:
+on:
+  push:
+    branches: [ main ]      # al subir cambios → reconstruye y publica el sitio
+  schedule:
+    - cron: "0 9 5 * *"     # día 5 de cada mes (~06:00 Chile) → baja datos nuevos
+  workflow_dispatch: {}      # botón "Run workflow" para correrlo a mano
+
+# Permisos: escribir en el repo (commit) y publicar en Pages.
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Evita ejecuciones solapadas.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  construir-y-publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      # En calendario o ejecución manual: baja los meses recientes y reprocesa.
+      - name: Actualizar con datos nuevos
+        if: github.event_name != 'push'
+        env:
+          ADRI_BASE: ${{ github.workspace }}
+          ADRI_NO_BROWSER: "1"
+        run: python actualizar_y_publicar.py --extraer-recientes
+
+      # En un push: solo reconstruye el sitio desde los datos ya versionados.
+      - name: Reconstruir sitio (sin descargar)
+        if: github.event_name == 'push'
+        env:
+          ADRI_BASE: ${{ github.workspace }}
+          ADRI_NO_BROWSER: "1"
+        run: python actualizar_y_publicar.py
+
+      # Solo cuando hubo descarga de datos nuevos: guarda los cambios en el repo.
+      - name: Commitear datos/dashboards actualizados
+        if: github.event_name != 'push'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs Datos_Zopiclona Datos_Melatonina
+          if git diff --staged --quiet; then
+            echo "Sin cambios que commitear."
+          else
+            git commit -m "Actualización automática de dashboards [skip ci]"
+            git push
+          fi
+
+      - name: Preparar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir el sitio (carpeta docs/)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Publicar en GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
