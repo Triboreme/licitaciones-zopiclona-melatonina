@@ -103,37 +103,53 @@ def procesador_zopiclona_cascada():
                 # OJO: en Mercado Público existe un único código ONU (51141810
                 # "Zopiclona") para TODA la familia, por lo que NombreroductoGenerico
                 # dice "Zopiclona" casi siempre, AUNQUE la compra real sea Eszopiclona.
-                # Por eso el genérico NO sirve para distinguir pura/derivado: lo que
-                # manda es lo que el COMPRADOR especificó (EspecificacionComprador).
-                # La versión anterior, al priorizar el genérico, clasificaba como
-                # "pura" ~1.100 líneas que en realidad eran eszopiclona.
+                # Además el dato de origen viene MUY sucio: genéricos equivocados
+                # (p. ej. "Clorhidrato de lincomicina"), el nombre escrito mal
+                # ("eszoplicona", "ezopiclona") y la palabra correcta a veces SOLO en
+                # la especificación del PROVEEDOR. Por eso se busca en los tres campos
+                # (genérico + comprador + proveedor) y con tolerancia a erratas.
                 gen  = pl.col("NombreroductoGenerico").str.to_lowercase().fill_null("")
                 esp  = pl.col("EspecificacionComprador").str.to_lowercase().fill_null("")
                 prov = pl.col("EspecificacionProveedor").str.to_lowercase().fill_null("")
+                texto = gen + " | " + esp + " | " + prov
 
-                # Marcas comerciales de ESZOPICLONA que NO traen la palabra "eszopiclona".
-                # Solo se confían dentro del esp. del COMPRADOR; la del proveedor es un
-                # blob que suele listar varios productos y genera falsos positivos.
-                MARCAS_ESZOPICLONA = ["valnoc", "zopinom"]
+                # Familia ESZOPICLONA tolerante a las erratas frecuentes (eszopiclona,
+                # ezopiclona, eszoplicona, ezoplicona, eszpiclona...). Exige el prefijo
+                # "e" (es/ez), por lo que NUNCA matchea la zopiclona pura.
+                RE_ESZOPICLONA = r"e[sz][sz]?o?p[ilc]+ona"
+                # Zopiclona pura (+ erratas zoplicona/zopliclona), SIN el prefijo "e".
+                RE_ZOPICLONA = r"zo?pl?i?cl?ona"
+
+                # Marcas comerciales de eszopiclona que no traen la palabra
+                # ("eszopiclona"): se buscan SIEMPRE en la esp. del COMPRADOR, y en la
+                # del PROVEEDOR solo si NO menciona la dosis 7,5 mg (la de la zopiclona
+                # pura). Así se capturan los casos en que el comprador dejó la
+                # especificación vacía y el proveedor entregó "Zopinom 3mg" / "Valnoc
+                # 3mg", sin confundirse con los blobs que listan varios productos a 7,5.
+                MARCAS_ESZOPICLONA = ["valnoc", "zopinom", "nirvan"]
                 esp_marca_eszop = pl.lit(False)
+                prov_marca_eszop = pl.lit(False)
                 for marca in MARCAS_ESZOPICLONA:
-                    esp_marca_eszop = esp_marca_eszop | esp.str.contains(marca)
+                    esp_marca_eszop = esp_marca_eszop | esp.str.contains(marca, literal=True)
+                    prov_marca_eszop = prov_marca_eszop | prov.str.contains(marca, literal=True)
+                prov_sin_dosis_pura = ~(
+                    prov.str.contains("7.5", literal=True)
+                    | prov.str.contains("7,5", literal=True)
+                )
 
-                # Es DERIVADO (eszopiclona) si la palabra aparece en el genérico o en la
-                # especificación del comprador, o si el comprador nombró una marca de eszopiclona.
+                # Es DERIVADO si la familia eszopiclona aparece en CUALQUIERA de los tres
+                # campos, o si una marca de eszopiclona aparece en el comprador, o en el
+                # proveedor cuando éste no menciona la dosis pura (7,5 mg).
                 es_eszopiclona = (
-                    gen.str.contains("eszopiclona")
-                    | esp.str.contains("eszopiclona")
+                    texto.str.contains(RE_ESZOPICLONA)
                     | esp_marca_eszop
+                    | (prov_marca_eszop & prov_sin_dosis_pura)
                 )
 
-                # Es PURA si alguna fuente menciona "zopiclona" (incluye genéricos mal
-                # catalogados que solo lo dicen en la esp. del proveedor) y NO es eszopiclona.
-                menciona_zopiclona = (
-                    gen.str.contains("zopiclona")
-                    | esp.str.contains("zopiclona")
-                    | prov.str.contains("zopiclona")
-                )
+                # Es PURA si se menciona zopiclona (en cualquier campo) y NO es eszopiclona.
+                # El guard ~es_eszopiclona resuelve el hecho de que "eszopiclona"
+                # contenga "zopiclona" como substring.
+                menciona_zopiclona = texto.str.contains(RE_ZOPICLONA)
                 es_pura = menciona_zopiclona & ~es_eszopiclona
 
                 df_pura = df_validos.filter(es_pura)
