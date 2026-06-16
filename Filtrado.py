@@ -126,8 +126,8 @@ def procesador_zopiclona_cascada():
                 # Marcas comerciales de ESZOPICLONA que no traen la palabra (se clasifican
                 # como derivado). Marcas de ZOPICLONA PURA: solo se listan para reconocer
                 # que la fila SÍ es de la familia (su clasificación pura sale del genérico).
-                MARCAS_ESZOPICLONA   = ["valnoc", "zopinom", "nirvan", "plessir",
-                                        "zopinon", "ziponom", "insomnium", "eszop"]
+                MARCAS_ESZOPICLONA   = ["valnoc", "zopinom", "nirvan", "plessir", "zopinon",
+                                        "ziponom", "insomnium", "noptic", "eszop"]
                 MARCAS_ZOPICLONA_PURA = ["zometic", "zoperil", "losopil", "lisopil",
                                          "imovane", "zomeril", "noctidem"]
 
