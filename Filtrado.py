@@ -114,9 +114,10 @@ def procesador_zopiclona_cascada():
                 texto = gen + " | " + esp + " | " + prov
 
                 # Familia ESZOPICLONA tolerante a las erratas frecuentes (eszopiclona,
-                # ezopiclona, eszoplicona, ezoplicona, eszpiclona...). Exige el prefijo
-                # "e" (es/ez), por lo que NUNCA matchea la zopiclona pura.
-                RE_ESZOPICLONA = r"e[sz][sz]?o?p[ilc]+ona"
+                # ezopiclona, eszoplicona, ezoplicona, eszpiclona...). El \b (límite de
+                # palabra) es CLAVE: evita matchear "ezopiclona" dentro de "bezopiclona"
+                # (= "BE zopiclona" = bioequivalente zopiclona PURA), que no es eszopiclona.
+                RE_ESZOPICLONA = r"\be[sz][sz]?o?p[ilc]+ona"
                 # Zopiclona pura (+ erratas zoplicona/zopliclona), SIN el prefijo "e".
                 RE_ZOPICLONA = r"zo?pl?i?cl?ona"
 
