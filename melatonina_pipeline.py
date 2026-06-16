@@ -56,14 +56,11 @@ MAPEO_COLUMNAS = {
 
 # (Las columnas de producto para la búsqueda viven en extractor_comun.COLS_PRODUCTO)
 
-# Instituciones adicionales a INCLUIR aunque no contengan las palabras
-# clave municipales (muni / corp / desam). Cada sublista son palabras que
-# deben aparecer TODAS en OrganismoPublico (en minúsculas). "corp" ya cubre
-# "Corporación Antofagasta", pero se deja explícita para documentar la
-# intención y blindar variantes del nombre.
+# Instituciones municipales adicionales a INCLUIR aunque no contengan las
+# palabras clave municipales (muni / corp / desam). Cada sublista son palabras
+# que deben aparecer TODAS en OrganismoPublico (en minúsculas).
 INSTITUCIONES_INCLUIR = [
-    ["miraflores"],            # Consultorio Miraflores (antes se descartaba)
-    ["corp", "antofagasta"],   # Corporación Municipal de Antofagasta
+    ["miraflores"],            # Consultorio Miraflores (no entra por el filtro municipal)
 ]
 
 
@@ -176,11 +173,13 @@ def fase_filtrado():
                     continue
 
                 comprador_min = pl.col("OrganismoPublico").str.to_lowercase().fill_null("")
+                # \b (límite de palabra) evita que "muni" matchee dentro de
+                # "comunitaria"/"comunidad" e incluya entidades no municipales.
                 es_municipal = (
-                    comprador_min.str.contains("muni")   |   # Municipalidad, I. MUNICIPALIDAD
-                    comprador_min.str.contains("corp")   |   # Corporación Municipal
-                    comprador_min.str.contains("desam")  |   # Depto. de Salud Municipal
-                    _mask_instituciones_extra(comprador_min) # Consultorio Miraflores, Corp. Antofagasta
+                    comprador_min.str.contains(r"\bmuni")  |   # Municipalidad, I. MUNICIPALIDAD
+                    comprador_min.str.contains(r"\bcorp")  |   # Corporación Municipal
+                    comprador_min.str.contains(r"\bdesam") |   # Depto. de Salud Municipal
+                    _mask_instituciones_extra(comprador_min)   # Consultorio Miraflores, Corp. Antofagasta
                 )
 
                 # ---- 2. Validación de estado y deduplicación SEGURA ----
@@ -259,6 +258,12 @@ def _convertir_numero_robusto(serie: pd.Series) -> pd.Series:
             s = s.replace(".", "").replace(",", ".")
         elif "," in s:                     # formato 1234,56
             s = s.replace(",", ".")
+        elif s.count(".") > 1:             # 1.234.567 (puntos de miles)
+            s = s.replace(".", "")
+        elif "." in s:                     # un punto: miles si hay 3 dígitos tras él
+            entero, _, dec = s.partition(".")
+            if len(dec) == 3:              # 1.234 / 100.000 -> miles; 21.73 -> decimal
+                s = entero + dec
         try:
             return float(s)
         except ValueError:

@@ -4,16 +4,13 @@ import os
 from config_rutas import DATOS_ZOPICLONA, ZOPICLONA_FILTRADOS
 
 # =========================================================
-# Instituciones adicionales a INCLUIR aunque no contengan
-# las palabras clave municipales (muni / corp / desam).
+# Instituciones municipales adicionales a INCLUIR aunque no
+# contengan las palabras clave municipales (muni / corp / desam).
 # Cada sublista son palabras que deben aparecer TODAS en
-# OrganismoPublico (en minúsculas). Se comparan sin distinguir
-# mayúsculas; "corp" ya cubre "Corporación Antofagasta", pero se
-# deja explícita para documentar la intención y blindar variantes.
+# OrganismoPublico (en minúsculas), sin distinguir mayúsculas.
 # =========================================================
 INSTITUCIONES_INCLUIR = [
-    ["miraflores"],            # Consultorio Miraflores (antes se descartaba)
-    ["corp", "antofagasta"],   # Corporación Municipal de Antofagasta
+    ["miraflores"],            # Consultorio Miraflores (no entra por el filtro municipal)
 ]
 
 
@@ -72,12 +69,15 @@ def procesador_zopiclona_cascada():
                 # Creamos una columna temporal en minúsculas para buscar
                 comprador_min = pl.col("OrganismoPublico").str.to_lowercase().fill_null("")
 
-                # Definimos las palabras clave que identifican al mundo municipal
-                # + la allowlist de instituciones extra (Miraflores, Antofagasta).
+                # Palabras clave del mundo municipal + allowlist de instituciones
+                # extra (Miraflores, Antofagasta). Se anclan con límite de palabra (\b)
+                # para evitar colisiones de substring: sin el \b, "muni" matchea dentro
+                # de "comunitaria"/"comunidad" y colaba hospitales y centros de salud
+                # mental comunitarios que NO son municipales.
                 es_municipal = (
-                    comprador_min.str.contains("muni") |       # Municipalidad, I. MUNICIPALIDAD
-                    comprador_min.str.contains("corp") |       # Corporación Municipal, CORP.
-                    comprador_min.str.contains("desam") |      # Depto de Salud Municipal
+                    comprador_min.str.contains(r"\bmuni")  |   # Municipalidad, I. MUNICIPALIDAD, CORP MUNIC
+                    comprador_min.str.contains(r"\bcorp")  |   # Corporación (Municipal) de...
+                    comprador_min.str.contains(r"\bdesam") |   # Depto de Salud Municipal (DESAM)
                     _mask_instituciones_extra(comprador_min)   # Consultorio Miraflores, Corp. Antofagasta
                 )
 
@@ -98,15 +98,46 @@ def procesador_zopiclona_cascada():
                 df_validos     = df.filter(mask_calidad).unique(keep="first", maintain_order=True)
                 df_descartados = df.filter(~mask_calidad)
 
-                # 2. Lógica de Cascada (Zopiclona vs Eszopiclona)
-                gen = pl.col("NombreroductoGenerico").str.to_lowercase().fill_null("")
-                esp = pl.col("EspecificacionComprador").str.to_lowercase().fill_null("")
+                # 2. Lógica de Cascada (Zopiclona PURA vs Eszopiclona DERIVADO)
+                #
+                # OJO: en Mercado Público existe un único código ONU (51141810
+                # "Zopiclona") para TODA la familia, por lo que NombreroductoGenerico
+                # dice "Zopiclona" casi siempre, AUNQUE la compra real sea Eszopiclona.
+                # Por eso el genérico NO sirve para distinguir pura/derivado: lo que
+                # manda es lo que el COMPRADOR especificó (EspecificacionComprador).
+                # La versión anterior, al priorizar el genérico, clasificaba como
+                # "pura" ~1.100 líneas que en realidad eran eszopiclona.
+                gen  = pl.col("NombreroductoGenerico").str.to_lowercase().fill_null("")
+                esp  = pl.col("EspecificacionComprador").str.to_lowercase().fill_null("")
+                prov = pl.col("EspecificacionProveedor").str.to_lowercase().fill_null("")
 
-                es_pura_gen = gen.str.contains("zopiclona") & ~gen.str.contains("eszopiclona")
-                es_pura_esp = (~gen.str.contains("zopiclona")) & (esp.str.contains("zopiclona") & ~esp.str.contains("eszopiclona"))
+                # Marcas comerciales de ESZOPICLONA que NO traen la palabra "eszopiclona".
+                # Solo se confían dentro del esp. del COMPRADOR; la del proveedor es un
+                # blob que suele listar varios productos y genera falsos positivos.
+                MARCAS_ESZOPICLONA = ["valnoc", "zopinom"]
+                esp_marca_eszop = pl.lit(False)
+                for marca in MARCAS_ESZOPICLONA:
+                    esp_marca_eszop = esp_marca_eszop | esp.str.contains(marca)
 
-                df_pura = df_validos.filter(es_pura_gen | es_pura_esp)
-                df_der = df_validos.filter(~(es_pura_gen | es_pura_esp))
+                # Es DERIVADO (eszopiclona) si la palabra aparece en el genérico o en la
+                # especificación del comprador, o si el comprador nombró una marca de eszopiclona.
+                es_eszopiclona = (
+                    gen.str.contains("eszopiclona")
+                    | esp.str.contains("eszopiclona")
+                    | esp_marca_eszop
+                )
+
+                # Es PURA si alguna fuente menciona "zopiclona" (incluye genéricos mal
+                # catalogados que solo lo dicen en la esp. del proveedor) y NO es eszopiclona.
+                menciona_zopiclona = (
+                    gen.str.contains("zopiclona")
+                    | esp.str.contains("zopiclona")
+                    | prov.str.contains("zopiclona")
+                )
+                es_pura = menciona_zopiclona & ~es_eszopiclona
+
+                df_pura = df_validos.filter(es_pura)
+                df_der  = df_validos.filter(~es_pura)
 
                 def guardar_formateado(df_sub, ruta_dir, sufijo):
                     if not df_sub.is_empty():

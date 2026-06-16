@@ -28,13 +28,25 @@ def convertir_numero_robusto(serie):
         if s == "":
             return 0
 
-        # Caso chileno: 1.234,56
+        # Formato chileno con miles y decimal: 1.234,56 -> 1234.56
         if "." in s and "," in s:
             s = s.replace(".", "").replace(",", ".")
 
-        # Caso decimal con coma: 1234,56
+        # Solo coma decimal: 1234,56 -> 1234.56
         elif "," in s:
             s = s.replace(",", ".")
+
+        # Varios puntos = separadores de miles: 1.234.567 -> 1234567
+        elif s.count(".") > 1:
+            s = s.replace(".", "")
+
+        # Un solo punto: desambiguar miles vs decimal.
+        # "1.234"/"100.000" (3 dígitos tras el punto) es separador de miles;
+        # "12250.0"/"21.73" (1-2 dígitos) es decimal y se conserva tal cual.
+        elif "." in s:
+            entero, _, dec = s.partition(".")
+            if len(dec) == 3:
+                s = entero + dec
 
         try:
             return float(s)
@@ -608,7 +620,7 @@ function tableFromRows(rows, columns) {
                 val = val ?? "";
             }
 
-            html += `<td>${val}</td>`;
+            html += `<td>${escapeHTML(String(val))}</td>`;
         });
 
         html += "</tr>";
@@ -973,11 +985,14 @@ function renderComparativo() {
         <div class="analysis">
             <b>Análisis comparativo: zopiclona pura vs. derivados (eszopiclona).</b><br>
             Desagregación del gasto adjudicado según presentación del principio activo,
-            con resolución anual y mensual. La clasificación se realiza por jerarquía de
-            fuentes: primero el genérico declarado (<i>NombreProductoGenérico</i>) y, en su
-            defecto, la especificación del comprador, descartando coincidencias de
-            eszopiclona en la categoría "pura". Permite contrastar la sustitución entre
-            presentaciones y su incidencia en el gasto a lo largo de la serie temporal.
+            con resolución anual y mensual. Dado que Mercado Público asigna un único código
+            ONU a toda la familia (el genérico declarado siempre dice "Zopiclona"), la
+            clasificación se apoya en lo que efectivamente especificó el comprador: una
+            línea es <i>derivado</i> cuando "eszopiclona" aparece en el genérico o en la
+            especificación del comprador, o cuando ésta nombra una marca de eszopiclona
+            (Valnoc, Zopinom); de lo contrario, si se menciona zopiclona, se clasifica como
+            <i>pura</i>. Permite contrastar la sustitución entre presentaciones y su
+            incidencia en el gasto a lo largo de la serie temporal.
         </div>
 
         <div class="grid2">
@@ -1661,9 +1676,9 @@ function renderTablaBase(id, titulo, data) {
             }
 
             if (c === "LINK" && val !== "") {
-                html += `<td><a href="${val}" target="_blank">Abrir</a></td>`;
+                html += `<td><a href="${escapeHTML(String(val))}" target="_blank">Abrir</a></td>`;
             } else {
-                html += `<td>${val}</td>`;
+                html += `<td>${escapeHTML(String(val))}</td>`;
             }
         });
 
