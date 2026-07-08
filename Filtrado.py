@@ -2,6 +2,7 @@ import polars as pl
 import os
 
 from config_rutas import DATOS_ZOPICLONA, ZOPICLONA_FILTRADOS
+from filtros_comunes import mask_farmacia_popular
 
 # =========================================================
 # Instituciones municipales adicionales a INCLUIR aunque no
@@ -88,8 +89,14 @@ def procesador_zopiclona_cascada():
                 else:
                     mask_estado = pl.lit(True)
 
-                # 1. Filtro de calidad: institución municipal/allowlist + estado confirmado.
-                mask_calidad = es_municipal & mask_estado
+                # Exclusión: OC destinadas a farmacias populares/comunales
+                # (venta a vecinos, fuera del universo de la red asistencial).
+                # Regla configurable en filtros_comunes.py.
+                es_farmacia_popular = mask_farmacia_popular(df)
+
+                # 1. Filtro de calidad: institución municipal/allowlist + estado
+                #    confirmado + NO destinada a farmacia popular/comunal.
+                mask_calidad = es_municipal & mask_estado & ~es_farmacia_popular
 
                 # 2. Deduplicación SEGURA.
                 #    El antiguo ~df.is_duplicated() marcaba TODAS las copias de una fila

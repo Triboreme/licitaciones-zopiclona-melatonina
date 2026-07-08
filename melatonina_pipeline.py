@@ -30,6 +30,7 @@ from pathlib import Path
 
 from config_rutas import DATOS_MELATONINA, MELATONINA_FILTRADOS, ANIO_INICIO, ANIO_FIN
 from extractor_comun import extraer_farmaco
+from filtros_comunes import mask_farmacia_popular
 
 # =============================================================
 # CONFIGURACIÓN GLOBAL  (las rutas viven en config_rutas.py)
@@ -189,7 +190,11 @@ def fase_filtrado():
                 else:
                     mask_estado = pl.col("Estado").is_in(estados_validos)
 
-                mask_calidad = es_municipal & mask_estado
+                # Exclusión: OC destinadas a farmacias populares/comunales
+                # (fuera del universo). Regla configurable en filtros_comunes.py.
+                es_farmacia_popular = mask_farmacia_popular(df)
+
+                mask_calidad = es_municipal & mask_estado & ~es_farmacia_popular
 
                 # .unique(keep="first") conserva una copia de cada fila repetida.
                 # (El antiguo ~df.is_duplicated() borraba TODAS las copias, incluida la
@@ -522,7 +527,7 @@ a { color: #4f46e5; }
 
 <body>
 <div class="sidebar">
-    <h2>🌙 Melatonina</h2>
+    <h2>Melatonina</h2>
     <div class="menu-item active"  onclick="setView('resumen',this)">Resumen General</div>
     <div class="menu-item"         onclick="setView('municipalidades',this)">Municipalidades</div>
     <div class="menu-item"         onclick="setView('proveedores',this)">Proveedores</div>

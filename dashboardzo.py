@@ -12,7 +12,7 @@ from config_rutas import ZOPICLONA_FILTRADOS
 # =========================================================
 
 ROOT = ZOPICLONA_FILTRADOS
-OUT_HTML = ROOT / "Dashboard_Zopiclona_SOLO_LICITACION_Pura_Derivados.html"
+OUT_HTML = ROOT / "Dashboard_Zopiclona_SOLO_LICITACION_Pura_Eszopiclona.html"
 
 # =========================================================
 # 2. FUNCIONES PYTHON
@@ -90,7 +90,7 @@ def detectar_categoria_solo_licitacion(nombre_archivo):
         return "Pura con Licitación", "Pura", "Con Licitación"
 
     elif "DERIV_LIC" in nombre:
-        return "Derivados con Licitación", "Derivados", "Con Licitación"
+        return "Eszopiclona con Licitación", "Eszopiclona", "Con Licitación"
 
     else:
         return None, None, None
@@ -476,11 +476,11 @@ td {
 <body>
 
 <div class="sidebar">
-    <h2>💊 Zopiclona</h2>
+    <h2>Zopiclona</h2>
     <div class="menu-item active" onclick="setView('resumen', this)">Resumen Solo Licitación</div>
-    <div class="menu-item" onclick="setView('comparativo', this)">Pura vs Derivados</div>
+    <div class="menu-item" onclick="setView('comparativo', this)">Pura vs Eszopiclona</div>
     <div class="menu-item" onclick="setView('pura', this)">Pura con Licitación</div>
-    <div class="menu-item" onclick="setView('derivados', this)">Derivados con Licitación</div>
+    <div class="menu-item" onclick="setView('derivados', this)">Eszopiclona con Licitación</div>
     <div class="menu-item" onclick="setView('licitaciones', this)">Licitaciones por Municipalidad</div>
     <div class="menu-item" onclick="setView('anual', this)">Desglose Anual</div>
     <div class="menu-item" onclick="setView('mensual', this)">Desglose Mensual</div>
@@ -524,9 +524,9 @@ function setView(id, el) {
 
     const titulos = {
         resumen: "Resumen Solo Licitación",
-        comparativo: "Comparativo Pura vs Derivados",
+        comparativo: "Comparativo Pura vs Eszopiclona",
         pura: "Zopiclona Pura con Licitación",
-        derivados: "Derivados con Licitación",
+        derivados: "Eszopiclona con Licitación",
         licitaciones: "Licitaciones por Municipalidad",
         anual: "Desglose Anual",
         mensual: "Desglose Mensual",
@@ -875,7 +875,7 @@ function renderResumen() {
     const div = document.getElementById("resumen");
 
     const pura = DATA.filter(r => r["TIPO_PRODUCTO"] === "Pura");
-    const derivados = DATA.filter(r => r["TIPO_PRODUCTO"] === "Derivados");
+    const derivados = DATA.filter(r => r["TIPO_PRODUCTO"] === "Eszopiclona");
 
     const porCategoria = resumenCategoria(DATA);
     const porMunicipalidad = resumenMunicipalidad(DATA).sort((a,b) => b.total - a.total);
@@ -884,8 +884,8 @@ function renderResumen() {
     div.innerHTML = `
         <div class="analysis">
             <b>Resumen ejecutivo — adquisiciones bajo procedimiento licitatorio.</b><br>
-            Universo de análisis: órdenes de compra (OC) de zopiclona y sus derivados
-            (eszopiclona) cursadas por la administración municipal de salud y registradas
+            Universo de análisis: órdenes de compra (OC) de zopiclona y eszopiclona
+            cursadas por la administración municipal de salud y registradas
             en Mercado Público. Criterios de inclusión: (i) comprador del subsector
             municipal o entidad de la red de atención primaria habilitada; (ii) estado
             de la OC <i>Aceptada</i> o <i>Recepción Conforme</i> (transacción efectivamente
@@ -899,7 +899,7 @@ function renderResumen() {
 
         <div class="grid2">
             <div class="chart">
-                <h2>Total por tipo: Pura vs Derivados</h2>
+                <h2>Total por tipo: Pura vs Eszopiclona</h2>
                 <div id="resumen_tipo_total"></div>
             </div>
 
@@ -958,7 +958,7 @@ function renderComparativo() {
     const anios = unique(DATA.map(r => r["AÑO"])).sort();
     const meses = unique(DATA.map(r => r["PERIODO_MENSUAL"])).sort();
 
-    const categorias = ["Pura", "Derivados"];
+    const categorias = ["Pura", "Eszopiclona"];
 
     const tracesAnual = categorias.map(cat => ({
         x: anios,
@@ -983,12 +983,12 @@ function renderComparativo() {
 
     div.innerHTML = `
         <div class="analysis">
-            <b>Análisis comparativo: zopiclona pura vs. derivados (eszopiclona).</b><br>
+            <b>Análisis comparativo: zopiclona pura vs. eszopiclona.</b><br>
             Desagregación del gasto adjudicado según presentación del principio activo,
             con resolución anual y mensual. Dado que Mercado Público asigna un único código
             ONU a toda la familia (el genérico declarado siempre dice "Zopiclona"), la
             clasificación se apoya en lo que efectivamente especificó el comprador: una
-            línea es <i>derivado</i> cuando "eszopiclona" aparece en el genérico o en la
+            línea es <i>eszopiclona</i> cuando esa palabra aparece en el genérico o en la
             especificación del comprador, o cuando ésta nombra una marca de eszopiclona
             (Valnoc, Zopinom); de lo contrario, si se menciona zopiclona, se clasifica como
             <i>pura</i>. Permite contrastar la sustitución entre presentaciones y su
@@ -1009,12 +1009,12 @@ function renderComparativo() {
 
         <div class="grid2">
             <div class="chart">
-                <h2>Tabla anual Pura vs Derivados</h2>
+                <h2>Tabla anual Pura vs Eszopiclona</h2>
                 <div id="tabla_comp_anual"></div>
             </div>
 
             <div class="chart">
-                <h2>Tabla mensual Pura vs Derivados</h2>
+                <h2>Tabla mensual Pura vs Eszopiclona</h2>
                 <div id="tabla_comp_mensual"></div>
             </div>
         </div>
@@ -1271,7 +1271,7 @@ function actualizarGraficoAnualTotal() {
     const muni = document.getElementById("select_muni_anual").value;
     const dataMuni = DATA.filter(r => r["COMPRADOR"] === muni);
     const anios = obtenerAnios(DATA);
-    const categorias = ["Pura", "Derivados"];
+    const categorias = ["Pura", "Eszopiclona"];
 
     const traces = categorias.map(cat => ({
         x: anios,
@@ -1320,7 +1320,7 @@ function actualizarGraficoAnualConteo() {
 
     const dataMuni = DATA.filter(r => r["COMPRADOR"] === muni);
     const anios = obtenerAnios(DATA);
-    const categorias = ["Pura", "Derivados"];
+    const categorias = ["Pura", "Eszopiclona"];
 
     const traces = categorias.map(cat => ({
         x: anios,
@@ -1378,7 +1378,7 @@ function actualizarGraficoMensualTotal() {
     );
 
     const meses = obtenerMesesBase();
-    const categorias = ["Pura", "Derivados"];
+    const categorias = ["Pura", "Eszopiclona"];
 
     const traces = categorias.map(cat => ({
         x: meses.map(m => m.nombre),
@@ -1432,7 +1432,7 @@ function actualizarGraficoMensualConteo() {
     );
 
     const meses = obtenerMesesBase();
-    const categorias = ["Pura", "Derivados"];
+    const categorias = ["Pura", "Eszopiclona"];
 
     const traces = categorias.map(cat => ({
         x: meses.map(m => m.nombre),
@@ -1491,7 +1491,7 @@ function renderAnual() {
         <div class="analysis">
             <b>Serie anual desagregada por comprador.</b><br>
             Evolución interanual del gasto adjudicado, estratificada por presentación
-            (pura vs. derivados). El selector permite el análisis individual por entidad;
+            (pura vs. eszopiclona). El selector permite el análisis individual por entidad;
             la métrica secundaria alterna entre número de registros (líneas de OC) y
             licitaciones únicas. Útil para identificar tendencias, estacionalidad
             estructural y posibles puntos de quiebre en la conducta de compra.
@@ -1699,7 +1699,7 @@ function renderBase() {
     const div = document.getElementById("base");
 
     const pura = DATA.filter(r => r["TIPO_PRODUCTO"] === "Pura");
-    const derivados = DATA.filter(r => r["TIPO_PRODUCTO"] === "Derivados");
+    const derivados = DATA.filter(r => r["TIPO_PRODUCTO"] === "Eszopiclona");
 
     div.innerHTML = `
         <div class="analysis">
@@ -1707,7 +1707,7 @@ function renderBase() {
             Conjunto depurado y trazable que sustenta todos los indicadores del tablero.
             Cada fila corresponde a una línea de OC con licitación válida, confirmada y
             no duplicada. Las pestañas permiten segmentar entre el universo completo y las
-            presentaciones pura y derivados. El enlace de cada registro remite a la OC
+            presentaciones pura y eszopiclona. El enlace de cada registro remite a la OC
             original en Mercado Público, garantizando la verificabilidad de la fuente.
         </div>
 
@@ -1717,12 +1717,12 @@ function renderBase() {
             <div class="tab-buttons">
                 <button class="tab-btn active" onclick="setBaseTab('base_todo', this)">Todo con licitación</button>
                 <button class="tab-btn" onclick="setBaseTab('base_pura', this)">Pura con licitación</button>
-                <button class="tab-btn" onclick="setBaseTab('base_derivados', this)">Derivados con licitación</button>
+                <button class="tab-btn" onclick="setBaseTab('base_derivados', this)">Eszopiclona con licitación</button>
             </div>
 
             ${renderTablaBase("base_todo", "Todo con licitación", DATA)}
             ${renderTablaBase("base_pura", "Pura con licitación", pura)}
-            ${renderTablaBase("base_derivados", "Derivados con licitación", derivados)}
+            ${renderTablaBase("base_derivados", "Eszopiclona con licitación", derivados)}
         </div>
     `;
 
@@ -1732,7 +1732,7 @@ function renderBase() {
 renderResumen();
 renderComparativo();
 renderTipo("pura", "Pura");
-renderTipo("derivados", "Derivados");
+renderTipo("derivados", "Eszopiclona");
 renderLicitaciones();
 renderAnual();
 renderMensual();

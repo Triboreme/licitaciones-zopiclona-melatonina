@@ -39,7 +39,7 @@ from config_rutas import (
 from extractor_comun import extraer_farmaco
 
 DOCS = BASE_ADRI / "docs"
-DASH_ZOPI = ZOPICLONA_FILTRADOS / "Dashboard_Zopiclona_SOLO_LICITACION_Pura_Derivados.html"
+DASH_ZOPI = ZOPICLONA_FILTRADOS / "Dashboard_Zopiclona_SOLO_LICITACION_Pura_Eszopiclona.html"
 DASH_MELA = MELATONINA_FILTRADOS / "Dashboard_Melatonina_Licitacion.html"
 
 # Evita que los scripts intenten abrir un navegador al generarse.
@@ -91,7 +91,7 @@ def publicar():
     publicados = []
     if DASH_ZOPI.exists():
         shutil.copy2(DASH_ZOPI, DOCS / "zopiclona.html")
-        publicados.append(("zopiclona.html", "Zopiclona (pura + derivados)"))
+        publicados.append(("zopiclona.html", "Zopiclona (pura + eszopiclona)"))
     if DASH_MELA.exists():
         shutil.copy2(DASH_MELA, DOCS / "melatonina.html")
         publicados.append(("melatonina.html", "Melatonina"))
@@ -169,7 +169,7 @@ def main():
     filtrar()
     generar_dashboards()
     publicar()
-    print("\n✔ Listo. Sube la carpeta docs/ (o deja que GitHub Actions lo haga).")
+    print("\nListo. Sube la carpeta docs/ (o deja que GitHub Actions lo haga).")
 
 
 if __name__ == "__main__":
