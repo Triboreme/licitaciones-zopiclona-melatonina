@@ -1119,7 +1119,7 @@ function renderTipo(sectionId, tipo) {
         ${kpisHTML(data)}
 
         <div class="chart">
-            <h2>Top municipalidades por gasto total - ${tipo}</h2>
+            <h2>${tipo === "Zopiclona" ? "Municipalidades con mayor gasto en zopiclona" : "Top municipalidades por gasto total - " + tipo}</h2>
             <div id="top_${sectionId}"></div>
         </div>
 
