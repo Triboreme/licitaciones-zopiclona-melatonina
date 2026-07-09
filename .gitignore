@@ -12,3 +12,4 @@ Datos_Melatonina_Filtrados/
 
 # Base de datos suelta de pruebas antiguas
 *.db
+.claude/
