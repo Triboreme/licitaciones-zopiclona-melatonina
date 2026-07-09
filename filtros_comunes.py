@@ -32,8 +32,6 @@ COLS_SENAL_FARMACIA = [
 ]
 
 # Denominaciones con que los municipios nombran su farmacia popular/comunal.
-# Se acepta "farmacia", "farmacias", "farm." y erratas tipo "famacia" gracias
-# al patrón: farm + letras opcionales + punto opcional + espacio(s).
 DENOMINACIONES_FARMACIA = [
     "popular",
     "comunal",
@@ -42,17 +40,30 @@ DENOMINACIONES_FARMACIA = [
     "ciudadana",
     "vecina",
     "solidaria",
+    r"del\s+pueblo",              # "Farmacia del Pueblo"
+    r"del\s+carb[oó]n",           # "Botica del Carbón" (Lota)
+]
+
+# Sinónimos de "farmacia" usados como prefijo. "farm[a-z]*\.?" acepta
+# "farmacia", "farmacias", "farm." y erratas tipo "famacia".
+PREFIJOS_FARMACIA = [
+    r"farm[a-z]*\.?",
+    r"boticas?",
+    r"droguer[ií]as?",
 ]
 
 # Patrones independientes (regex, sobre texto en minúsculas).
 PATRONES_FARMACIA_EXTRA = [
     r"junto\s+a\s+ti",            # "Farmacias Junto a Ti" (Talca)
+    r"\bfarm[a-z]*\.?\s+boti",    # "Farmacia Botica ...", "Farmacia Botiquín"
+    r"\bboticas?\b",              # "Botica" municipal a secas
 ]
 
 
 def _regex_farmacia() -> str:
+    prefijos = "|".join(PREFIJOS_FARMACIA)
     denominaciones = "|".join(DENOMINACIONES_FARMACIA)
-    return rf"\bfarm[a-z]*\.?\s+({denominaciones})"
+    return rf"\b({prefijos})\s+({denominaciones})"
 
 
 def mask_farmacia_popular(df: pl.DataFrame) -> pl.Expr:
