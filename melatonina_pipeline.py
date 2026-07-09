@@ -799,7 +799,7 @@ function renderResumen() {
         marker: { color: "#6366f1" },
         text: top15.map(x => formatCLP(x.total)),
         textposition: "auto"
-    }], { template: "plotly_white", margin: { l: 390, t: 10 }, xaxis: { title: "Total comprado (CLP)" } });
+    }], { template: "plotly_white", margin: { t: 10 }, yaxis: { automargin: true },xaxis: { title: "Total comprado (CLP)" } });
 }
 
 // =====================================================================
@@ -840,7 +840,7 @@ function renderMunicipalidades() {
         marker: { color: "#6366f1" },
         text: top20.map(x => formatCLP(x.total)),
         textposition: "auto"
-    }], { template: "plotly_white", margin: { l: 390, t: 10 }, xaxis: { title: "Total comprado (CLP)" } });
+    }], { template: "plotly_white", margin: { t: 10 }, yaxis: { automargin: true },xaxis: { title: "Total comprado (CLP)" } });
 
     document.getElementById("tabla_muni").innerHTML = tableFromRows(porMuni, [
         { key: "municipalidad",  label: "Municipalidad" },
@@ -890,7 +890,7 @@ function renderProveedores() {
         marker: { color: "#10b981" },
         text: top20.map(x => formatCLP(x.total)),
         textposition: "auto"
-    }], { template: "plotly_white", margin: { l: 390, t: 10 }, xaxis: { title: "Total adjudicado (CLP)" } });
+    }], { template: "plotly_white", margin: { t: 10 }, yaxis: { automargin: true },xaxis: { title: "Total adjudicado (CLP)" } });
 
     document.getElementById("tabla_prov").innerHTML = tableFromRows(porProv, [
         { key: "proveedor",      label: "Proveedor" },
@@ -939,7 +939,7 @@ function renderLicitaciones() {
         marker: { color: "#10b981" },
         text: top20.map(x => x.licitaciones),
         textposition: "auto"
-    }], { template: "plotly_white", margin: { l: 390, t: 10 }, xaxis: { title: "Licitaciones adjudicadas" } });
+    }], { template: "plotly_white", margin: { t: 10 }, yaxis: { automargin: true },xaxis: { title: "Licitaciones adjudicadas" } });
 
     document.getElementById("tabla_lic").innerHTML = tableFromRows(rows, [
         { key: "municipalidad",  label: "Municipalidad" },

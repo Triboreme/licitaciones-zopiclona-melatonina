@@ -986,7 +986,8 @@ function renderResumen() {
         textposition: "auto"
     }], {
         template: "plotly_white",
-        margin: {l: 390, t: 10},
+        margin: {t: 10},
+        yaxis: {automargin: true},
         xaxis: {title: "Total comprado"}
     });
 }
@@ -1150,7 +1151,8 @@ function renderTipo(sectionId, tipo) {
         textposition: "auto"
     }], {
         template: "plotly_white",
-        margin: {l: 390, t: 10},
+        margin: {t: 10},
+        yaxis: {automargin: true},
         xaxis: {title: "Total comprado"}
     });
 
@@ -1241,7 +1243,8 @@ function renderProveedores() {
         textposition: "auto"
     }], {
         template: "plotly_white",
-        margin: {l: 390, t: 10},
+        margin: {t: 10},
+        yaxis: {automargin: true},
         xaxis: {title: "Total adjudicado"}
     });
 
@@ -1254,7 +1257,8 @@ function renderProveedores() {
         textposition: "auto"
     }], {
         template: "plotly_white",
-        margin: {l: 280, t: 10},
+        margin: {t: 10},
+        yaxis: {automargin: true},
         xaxis: {title: "Total adjudicado"}
     });
 
@@ -1267,7 +1271,8 @@ function renderProveedores() {
         textposition: "auto"
     }], {
         template: "plotly_white",
-        margin: {l: 280, t: 10},
+        margin: {t: 10},
+        yaxis: {automargin: true},
         xaxis: {title: "Total adjudicado"}
     });
 
@@ -1321,7 +1326,8 @@ function renderLicitaciones() {
         textposition: "auto"
     }], {
         template: "plotly_white",
-        margin: {l: 390, t: 10},
+        margin: {t: 10},
+        yaxis: {automargin: true},
         xaxis: {title: "Licitaciones adjudicadas"}
     });
 
