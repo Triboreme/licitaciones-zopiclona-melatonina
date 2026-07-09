@@ -30,7 +30,7 @@ from pathlib import Path
 
 from config_rutas import DATOS_MELATONINA, MELATONINA_FILTRADOS, ANIO_INICIO, ANIO_FIN
 from extractor_comun import extraer_farmaco
-from filtros_comunes import mask_farmacia_popular
+from filtros_comunes import mask_farmacia_popular, corregir_comprador
 
 # =============================================================
 # CONFIGURACIÓN GLOBAL  (las rutas viven en config_rutas.py)
@@ -336,7 +336,7 @@ def fase_dashboard():
         df[col] = _convertir_numero_robusto(df[col])
 
     # ---- Textos ----
-    df["COMPRADOR"]       = df["COMPRADOR"].apply(_limpiar_texto)
+    df["COMPRADOR"]       = df["COMPRADOR"].apply(_limpiar_texto).apply(corregir_comprador)
     df["PROVEEDOR"]       = df["PROVEEDOR"].apply(_limpiar_texto)
     df["¿Para quién?"]    = df["¿Para quién?"].apply(_limpiar_texto)
     df["LICITACIÓN_LIMPIA"] = df["LICITACIÓN"].apply(_limpiar_licitacion)

@@ -6,6 +6,7 @@ import glob
 import webbrowser
 
 from config_rutas import ZOPICLONA_FILTRADOS
+from filtros_comunes import corregir_comprador
 
 # =========================================================
 # 1. CONFIGURACIÓN (rutas centralizadas en config_rutas.py)
@@ -160,7 +161,7 @@ for col in ["CANTIDAD", "VALOR C/U", "TOTAL"]:
     df_total[col] = convertir_numero_robusto(df_total[col])
 
 # Textos
-df_total["COMPRADOR"] = df_total["COMPRADOR"].apply(limpiar_texto)
+df_total["COMPRADOR"] = df_total["COMPRADOR"].apply(limpiar_texto).apply(corregir_comprador)
 df_total["PROVEEDOR"] = df_total["PROVEEDOR"].apply(limpiar_texto)
 df_total["¿Para quién?"] = df_total["¿Para quién?"].apply(limpiar_texto)
 df_total["LICITACIÓN_LIMPIA"] = df_total["LICITACIÓN"].apply(limpiar_licitacion)

@@ -23,6 +23,25 @@ PATRONES_FARMACIA_EXTRA (p. ej. agregar/quitar una denominación).
 
 import polars as pl
 
+# ---------------------------------------------------------------------------
+# CORRECCIONES DE NOMBRE DE COMPRADOR (solo para visualización en dashboards)
+# ---------------------------------------------------------------------------
+# Mercado Público trunca algunos nombres de organismo (corte a 40 caracteres).
+# Aquí se mapea el nombre truncado → nombre completo verificado. Los datos
+# crudos y filtrados NO se modifican; la corrección se aplica al generar los
+# dashboards. Para agregar otro caso basta añadir una línea al diccionario.
+CORRECCIONES_COMPRADOR = {
+    "CORP MUNICIPAL DE DESARROLLO SOCIAL DE A":
+        "CORP MUNICIPAL DE DESARROLLO SOCIAL DE ANTOFAGASTA",
+}
+
+
+def corregir_comprador(nombre):
+    """Devuelve el nombre completo del comprador si está en la tabla de correcciones."""
+    if nombre is None:
+        return nombre
+    return CORRECCIONES_COMPRADOR.get(str(nombre).strip(), nombre)
+
 # Columnas del CSV crudo donde puede aparecer la señal de destino.
 COLS_SENAL_FARMACIA = [
     "Nombre",
