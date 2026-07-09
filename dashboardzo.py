@@ -87,7 +87,7 @@ def detectar_categoria_solo_licitacion(nombre_archivo):
     # Este dashboard SOLO considera archivos con licitación.
     # Ignora PURA_SIN y DERIV_SIN.
     if "PURA_LIC" in nombre:
-        return "Pura con Licitación", "Pura", "Con Licitación"
+        return "Zopiclona con Licitación", "Zopiclona", "Con Licitación"
 
     elif "DERIV_LIC" in nombre:
         return "Eszopiclona con Licitación", "Eszopiclona", "Con Licitación"
@@ -478,10 +478,11 @@ td {
 <div class="sidebar">
     <h2>Zopiclona</h2>
     <div class="menu-item active" onclick="setView('resumen', this)">Resumen Solo Licitación</div>
-    <div class="menu-item" onclick="setView('comparativo', this)">Pura vs Eszopiclona</div>
-    <div class="menu-item" onclick="setView('pura', this)">Pura con Licitación</div>
+    <div class="menu-item" onclick="setView('comparativo', this)">Zopiclona vs Eszopiclona</div>
+    <div class="menu-item" onclick="setView('pura', this)">Zopiclona con Licitación</div>
     <div class="menu-item" onclick="setView('derivados', this)">Eszopiclona con Licitación</div>
     <div class="menu-item" onclick="setView('licitaciones', this)">Licitaciones por Municipalidad</div>
+    <div class="menu-item" onclick="setView('proveedores', this)">Proveedores</div>
     <div class="menu-item" onclick="setView('anual', this)">Desglose Anual</div>
     <div class="menu-item" onclick="setView('mensual', this)">Desglose Mensual</div>
     <div class="menu-item" onclick="setView('base', this)">Base Completa</div>
@@ -498,6 +499,7 @@ td {
         <section id="pura" class="section"></section>
         <section id="derivados" class="section"></section>
         <section id="licitaciones" class="section"></section>
+        <section id="proveedores" class="section"></section>
         <section id="anual" class="section"></section>
         <section id="mensual" class="section"></section>
         <section id="base" class="section"></section>
@@ -524,10 +526,11 @@ function setView(id, el) {
 
     const titulos = {
         resumen: "Resumen Solo Licitación",
-        comparativo: "Comparativo Pura vs Eszopiclona",
-        pura: "Zopiclona Pura con Licitación",
+        comparativo: "Comparativo Zopiclona vs Eszopiclona",
+        pura: "Zopiclona con Licitación",
         derivados: "Eszopiclona con Licitación",
         licitaciones: "Licitaciones por Municipalidad",
+        proveedores: "Proveedores",
         anual: "Desglose Anual",
         mensual: "Desglose Mensual",
         base: "Base Completa Solo Licitación"
@@ -664,6 +667,44 @@ function resumenMunicipalidad(data) {
         total: x.total,
         cantidad: x.cantidad,
         registros: x.registros,
+        licitaciones: x.licitacionesSet.size,
+        precioPromedio: x.cantidad > 0 ? x.total / x.cantidad : 0
+    }));
+}
+
+function resumenProveedor(data) {
+    let out = {};
+
+    data.forEach(r => {
+        const prov = r["PROVEEDOR"] || "Sin dato";
+
+        if (!out[prov]) {
+            out[prov] = {
+                proveedor: prov,
+                total: 0,
+                cantidad: 0,
+                registros: 0,
+                municipalidadesSet: new Set(),
+                licitacionesSet: new Set()
+            };
+        }
+
+        out[prov].total += Number(r["TOTAL"] || 0);
+        out[prov].cantidad += Number(r["CANTIDAD"] || 0);
+        out[prov].registros += 1;
+        out[prov].municipalidadesSet.add(r["COMPRADOR"]);
+
+        if (r["LICITACIÓN_LIMPIA"]) {
+            out[prov].licitacionesSet.add(r["LICITACIÓN_LIMPIA"]);
+        }
+    });
+
+    return Object.values(out).map(x => ({
+        proveedor: x.proveedor,
+        total: x.total,
+        cantidad: x.cantidad,
+        registros: x.registros,
+        municipalidades: x.municipalidadesSet.size,
         licitaciones: x.licitacionesSet.size,
         precioPromedio: x.cantidad > 0 ? x.total / x.cantidad : 0
     }));
@@ -874,7 +915,7 @@ function resumenMunicipalidadMes(data) {
 function renderResumen() {
     const div = document.getElementById("resumen");
 
-    const pura = DATA.filter(r => r["TIPO_PRODUCTO"] === "Pura");
+    const pura = DATA.filter(r => r["TIPO_PRODUCTO"] === "Zopiclona");
     const derivados = DATA.filter(r => r["TIPO_PRODUCTO"] === "Eszopiclona");
 
     const porCategoria = resumenCategoria(DATA);
@@ -899,7 +940,7 @@ function renderResumen() {
 
         <div class="grid2">
             <div class="chart">
-                <h2>Total por tipo: Pura vs Eszopiclona</h2>
+                <h2>Total por tipo: Zopiclona vs Eszopiclona</h2>
                 <div id="resumen_tipo_total"></div>
             </div>
 
@@ -958,7 +999,7 @@ function renderComparativo() {
     const anios = unique(DATA.map(r => r["AÑO"])).sort();
     const meses = unique(DATA.map(r => r["PERIODO_MENSUAL"])).sort();
 
-    const categorias = ["Pura", "Eszopiclona"];
+    const categorias = ["Zopiclona", "Eszopiclona"];
 
     const tracesAnual = categorias.map(cat => ({
         x: anios,
@@ -991,7 +1032,7 @@ function renderComparativo() {
             línea es <i>eszopiclona</i> cuando esa palabra aparece en el genérico o en la
             especificación del comprador, o cuando ésta nombra una marca de eszopiclona
             (Valnoc, Zopinom); de lo contrario, si se menciona zopiclona, se clasifica como
-            <i>pura</i>. Permite contrastar la sustitución entre presentaciones y su
+            <i>zopiclona</i> (pura). Permite contrastar la sustitución entre presentaciones y su
             incidencia en el gasto a lo largo de la serie temporal.
         </div>
 
@@ -1009,12 +1050,12 @@ function renderComparativo() {
 
         <div class="grid2">
             <div class="chart">
-                <h2>Tabla anual Pura vs Eszopiclona</h2>
+                <h2>Tabla anual Zopiclona vs Eszopiclona</h2>
                 <div id="tabla_comp_anual"></div>
             </div>
 
             <div class="chart">
-                <h2>Tabla mensual Pura vs Eszopiclona</h2>
+                <h2>Tabla mensual Zopiclona vs Eszopiclona</h2>
                 <div id="tabla_comp_mensual"></div>
             </div>
         </div>
@@ -1139,6 +1180,101 @@ function renderTipo(sectionId, tipo) {
         {key:"municipalidad", label:"Municipalidad"},
         {key:"total", label:"Total comprado", type:"money"},
         {key:"cantidad", label:"Cantidad", type:"num"},
+        {key:"licitaciones", label:"Licitaciones", type:"num"},
+        {key:"registros", label:"Registros", type:"num"},
+        {key:"precioPromedio", label:"Precio promedio ponderado", type:"money"}
+    ]);
+}
+
+function renderProveedores() {
+    const div = document.getElementById("proveedores");
+
+    const porProv = resumenProveedor(DATA).sort((a,b) => b.total - a.total);
+    const topTodo = porProv.slice(0, 20).reverse();
+
+    const provZopi = resumenProveedor(DATA.filter(r => r["TIPO_PRODUCTO"] === "Zopiclona"))
+        .sort((a,b) => b.total - a.total).slice(0, 15).reverse();
+    const provEszo = resumenProveedor(DATA.filter(r => r["TIPO_PRODUCTO"] === "Eszopiclona"))
+        .sort((a,b) => b.total - a.total).slice(0, 15).reverse();
+
+    div.innerHTML = `
+        <div class="analysis">
+            <b>Estructura de la oferta: proveedores adjudicatarios.</b><br>
+            Empresas adjudicatarias del suministro por licitación, ordenadas por monto
+            total adjudicado, para el universo completo y desagregadas por presentación
+            (zopiclona y eszopiclona). El precio promedio ponderado por proveedor permite
+            detectar dispersión de precios entre oferentes y evaluar el grado de
+            concentración del mercado.
+        </div>
+
+        <div class="chart">
+            <h2>Top 20 proveedores por gasto total adjudicado</h2>
+            <div id="prov_top_todo"></div>
+        </div>
+
+        <div class="grid2">
+            <div class="chart">
+                <h2>Top proveedores - Zopiclona</h2>
+                <div id="prov_top_zopi"></div>
+            </div>
+
+            <div class="chart">
+                <h2>Top proveedores - Eszopiclona</h2>
+                <div id="prov_top_eszo"></div>
+            </div>
+        </div>
+
+        <div class="chart">
+            <h2>Tabla de proveedores</h2>
+            <input class="search-box" id="search_proveedores" placeholder="Buscar proveedor..." onkeyup="filtrarTabla('search_proveedores', 'tabla_proveedores')">
+            <div id="tabla_proveedores"></div>
+        </div>
+    `;
+
+    Plotly.newPlot("prov_top_todo", [{
+        x: topTodo.map(x => x.total),
+        y: topTodo.map(x => x.proveedor),
+        type: "bar",
+        orientation: "h",
+        text: topTodo.map(x => formatCLP(x.total)),
+        textposition: "auto"
+    }], {
+        template: "plotly_white",
+        margin: {l: 390, t: 10},
+        xaxis: {title: "Total adjudicado"}
+    });
+
+    Plotly.newPlot("prov_top_zopi", [{
+        x: provZopi.map(x => x.total),
+        y: provZopi.map(x => x.proveedor),
+        type: "bar",
+        orientation: "h",
+        text: provZopi.map(x => formatCLP(x.total)),
+        textposition: "auto"
+    }], {
+        template: "plotly_white",
+        margin: {l: 280, t: 10},
+        xaxis: {title: "Total adjudicado"}
+    });
+
+    Plotly.newPlot("prov_top_eszo", [{
+        x: provEszo.map(x => x.total),
+        y: provEszo.map(x => x.proveedor),
+        type: "bar",
+        orientation: "h",
+        text: provEszo.map(x => formatCLP(x.total)),
+        textposition: "auto"
+    }], {
+        template: "plotly_white",
+        margin: {l: 280, t: 10},
+        xaxis: {title: "Total adjudicado"}
+    });
+
+    document.getElementById("tabla_proveedores").innerHTML = tableFromRows(porProv, [
+        {key:"proveedor", label:"Proveedor"},
+        {key:"total", label:"Total adjudicado", type:"money"},
+        {key:"cantidad", label:"Unidades vendidas", type:"num"},
+        {key:"municipalidades", label:"Municipalidades atendidas", type:"num"},
         {key:"licitaciones", label:"Licitaciones", type:"num"},
         {key:"registros", label:"Registros", type:"num"},
         {key:"precioPromedio", label:"Precio promedio ponderado", type:"money"}
@@ -1271,7 +1407,7 @@ function actualizarGraficoAnualTotal() {
     const muni = document.getElementById("select_muni_anual").value;
     const dataMuni = DATA.filter(r => r["COMPRADOR"] === muni);
     const anios = obtenerAnios(DATA);
-    const categorias = ["Pura", "Eszopiclona"];
+    const categorias = ["Zopiclona", "Eszopiclona"];
 
     const traces = categorias.map(cat => ({
         x: anios,
@@ -1320,7 +1456,7 @@ function actualizarGraficoAnualConteo() {
 
     const dataMuni = DATA.filter(r => r["COMPRADOR"] === muni);
     const anios = obtenerAnios(DATA);
-    const categorias = ["Pura", "Eszopiclona"];
+    const categorias = ["Zopiclona", "Eszopiclona"];
 
     const traces = categorias.map(cat => ({
         x: anios,
@@ -1378,7 +1514,7 @@ function actualizarGraficoMensualTotal() {
     );
 
     const meses = obtenerMesesBase();
-    const categorias = ["Pura", "Eszopiclona"];
+    const categorias = ["Zopiclona", "Eszopiclona"];
 
     const traces = categorias.map(cat => ({
         x: meses.map(m => m.nombre),
@@ -1432,7 +1568,7 @@ function actualizarGraficoMensualConteo() {
     );
 
     const meses = obtenerMesesBase();
-    const categorias = ["Pura", "Eszopiclona"];
+    const categorias = ["Zopiclona", "Eszopiclona"];
 
     const traces = categorias.map(cat => ({
         x: meses.map(m => m.nombre),
@@ -1698,7 +1834,7 @@ function renderTablaBase(id, titulo, data) {
 function renderBase() {
     const div = document.getElementById("base");
 
-    const pura = DATA.filter(r => r["TIPO_PRODUCTO"] === "Pura");
+    const pura = DATA.filter(r => r["TIPO_PRODUCTO"] === "Zopiclona");
     const derivados = DATA.filter(r => r["TIPO_PRODUCTO"] === "Eszopiclona");
 
     div.innerHTML = `
@@ -1716,12 +1852,12 @@ function renderBase() {
 
             <div class="tab-buttons">
                 <button class="tab-btn active" onclick="setBaseTab('base_todo', this)">Todo con licitación</button>
-                <button class="tab-btn" onclick="setBaseTab('base_pura', this)">Pura con licitación</button>
+                <button class="tab-btn" onclick="setBaseTab('base_pura', this)">Zopiclona con licitación</button>
                 <button class="tab-btn" onclick="setBaseTab('base_derivados', this)">Eszopiclona con licitación</button>
             </div>
 
             ${renderTablaBase("base_todo", "Todo con licitación", DATA)}
-            ${renderTablaBase("base_pura", "Pura con licitación", pura)}
+            ${renderTablaBase("base_pura", "Zopiclona con licitación", pura)}
             ${renderTablaBase("base_derivados", "Eszopiclona con licitación", derivados)}
         </div>
     `;
@@ -1731,9 +1867,10 @@ function renderBase() {
 
 renderResumen();
 renderComparativo();
-renderTipo("pura", "Pura");
+renderTipo("pura", "Zopiclona");
 renderTipo("derivados", "Eszopiclona");
 renderLicitaciones();
+renderProveedores();
 renderAnual();
 renderMensual();
 renderBase();
